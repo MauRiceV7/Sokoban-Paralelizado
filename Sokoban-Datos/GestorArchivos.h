@@ -3,6 +3,7 @@
 
 #include <string>
 #include <fstream>
+#include <chrono>
 
 class GestorArchivos {
 public:

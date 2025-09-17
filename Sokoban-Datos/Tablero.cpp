@@ -15,6 +15,8 @@ void Tablero::inicializarTablero(int filas, int columnas) {
     Nodo* filaSuperior = nullptr; // Almacena fila superior
     Nodo* actualSuperior = nullptr; // Camina fila superior
 
+    //Marca el tiempo inicial
+    auto startTime = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < filas; i++) {
         for (int j = 0; j < columnas; j++) {
             if (i == 0 && j == 0) { // Si estoy en el inicio
@@ -49,6 +51,13 @@ void Tablero::inicializarTablero(int filas, int columnas) {
             }
         }
     }
+    //Marca el tiempo final
+    auto endTime = std::chrono::high_resolution_clock::now();
+    //Calcula e imprime la duración
+    auto duracion = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    long long tiempoDurado = duracion.count();
+    std::cout << "Tiempo durado en inicializar el tablero: " << duracion.count() << " millisegundos" << std::endl;
+
 }
 
 void Tablero::insertarSimbolo(int fila, int columna, char simbolo) {
@@ -62,7 +71,7 @@ void Tablero::insertarSimbolo(int fila, int columna, char simbolo) {
         std::cout << "La fila o columna especificada esta fuera de los limites del tablero." << std::endl;
     }
 }
-
+//######### Metodo con medicion de tiempo #########
 void Tablero::imprimirTablero() {
     Nodo* filaInicio = inicio;
     GestorArchivos guardarPartida = GestorArchivos("PartidaGuardada.txt");

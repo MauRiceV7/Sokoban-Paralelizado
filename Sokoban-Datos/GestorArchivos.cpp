@@ -24,12 +24,14 @@ void GestorArchivos::copiarArchivo(const std::string& actual, const std::string&
     archivoOrigen.close();
     archivoDestino.close();
 }
-
+//######### Metodo con medicion de tiempo #########
 std::string GestorArchivos::leer() {
     std::string contenido;
     bool primerCaracter = true;
     if (archivo.is_open()) {
         std::string linea;
+        //Marca el tiempo inicial
+        auto startTime = std::chrono::high_resolution_clock::now();
         while (std::getline(archivo, linea)) {
             if (primerCaracter) {
                 primerCaracter = false;
@@ -39,6 +41,12 @@ std::string GestorArchivos::leer() {
             }
             contenido += linea + '\n';
         }
+        //Marca el tiempo final
+        auto endTime = std::chrono::high_resolution_clock::now();
+        //Calcula e imprime la duración
+        auto duracion = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+        long long tiempoDurado = duracion.count();
+        std::cout << "Tiempo durado en leer archivo: " << duracion.count() << " microseconds" << std::endl;
     }
     return contenido;
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include "Nodo.h"
 #include "GestorArchivos.h"
-#include <chrono>
+
 
 
 class Tablero {
