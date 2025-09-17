@@ -82,8 +82,8 @@ out/
 publish/
 *.publish.xml
 x64/
-*/x64/
-Debug/
+Sokoban-Datos/x64/
+Sokoban-Datos/Debug/
 
 # NuGet Packages
 *.nupkg
