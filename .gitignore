@@ -82,6 +82,8 @@ out/
 publish/
 *.publish.xml
 x64/
+*/x64/
+Debug/
 
 # NuGet Packages
 *.nupkg
