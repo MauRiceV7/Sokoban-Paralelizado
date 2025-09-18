@@ -109,30 +109,44 @@ void Tablero::imprimirTablero() {
 void Tablero::imprimirTableroParalelizado() {
     Nodo* nodoInicial = inicio;
 	Nodo* actual = inicio;
+    int numLineas;
     std::vector<std::list<char>> resultados(filas * columnas);
-    std::list<std::thread> threads;
+    std::vector<std::thread> threads;
     std::mutex mtx;
     std::string direccionProcesar;
 
+    direccionProcesar = "derecha";
+    numLineas = filas;
     // Esto lo estoy usando para indicar la dirección que se va a procesar si de arriba->abajo o izquierda->derecha (LISTO!!)
+    /*
     if (filas > columnas) {
         direccionProcesar = "abajo";
+		numLineas = columnas;
     }
     else {
         direccionProcesar = "derecha";
+		numLineas = filas;
     }
+	*/
 
     // Marca el tiempo inicial
     auto startTime = std::chrono::high_resolution_clock::now();
 
     // Map: Se lanzan los Threads
-    while (actual) {
+    for (int i = 0; i < numLineas; ++i) {
 		// Lanzar un thread para procesar la fila o columna actual
-		threads.emplace_back(procesarLinea, &actual, direccionProcesar, &resultados, &mtx);
+        threads.emplace_back(
+            &Tablero::procesarLinea,
+            this,
+            actual,
+            direccionProcesar,
+            std::ref(resultados[i]),
+            std::ref(mtx)
+        );
 		// Mover actual al inicio de la siguiente fila o columna según la dirección
 		if (direccionProcesar == "abajo") 
             actual = actual->getDerecha();
-		else if (direccionProcesar == "derecha") 
+		else // direccionProcesar == "derecha"
             actual = actual->getAbajo();
     }
 
@@ -156,7 +170,7 @@ void Tablero::imprimirTableroParalelizado() {
     std::cout << "Tiempo durado en imprimir nivel: " << duracion.count() << " millisegundos" << std::endl;
 }
 
-void Tablero::procesarLinea(Nodo*& inicial, std::string direccion, std::list<char>& resultado, std::mutex& mtx) {
+void Tablero::procesarLinea(Nodo* inicial, std::string direccion, std::list<char>& resultado, std::mutex& mtx) {
     std::list<char> local;
     Nodo* actual = inicial;
 

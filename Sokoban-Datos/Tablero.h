@@ -12,7 +12,7 @@ public:
     void inicializarTablero(int, int);
     void imprimirTablero();
     void imprimirTableroParalelizado();
-    void procesarLinea(Nodo*&, std::string, std::list<char>&, std::mutex&);
+    void procesarLinea(Nodo*, std::string, std::list<char>&, std::mutex&);
     void insertarSimbolo(int, int, char);
     void moverJugador(bool jugarPG);
     void movimiento(int&, int&, char);
