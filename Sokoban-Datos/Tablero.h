@@ -9,6 +9,7 @@ public:
     Tablero();
     void inicializarTablero(int, int);
     void imprimirTablero();
+    void imprimirTableroParalelizado();
     void insertarSimbolo(int, int, char);
     void moverJugador(bool jugarPG);
     void movimiento(int&, int&, char);
