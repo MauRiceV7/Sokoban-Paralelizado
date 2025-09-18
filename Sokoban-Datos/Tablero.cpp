@@ -106,6 +106,73 @@ void Tablero::imprimirTablero() {
 
     guardarPartida.cerrar();
 }
+void Tablero::imprimirTableroParalelizado() {
+    Nodo* nodoInicial = inicio;
+    std::vector<std::list<char>> results(filas * columnas);
+    std::vector<std::thread> threads;
+    std::mutex mtx;
+    std::string direccionProcesar;
+
+    // Esto lo estoy usando para indicar la dirección que se va a procesar si de arriba->abajo o izquierda->derecha (LISTO!!)
+    if (filas > columnas) {
+        direccionProcesar = "abajo";
+    }
+    else {
+        direccionProcesar = "derecha";
+    }
+
+    // Marca el tiempo inicial
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    // Map: Se lanzan los Threads
+    // TODO: falta averiguar como le pasamos el nodo que necesitamos pasarle a cada thread ya que no 
+    //       estoy seguro como funciona este metodo de threads.emplace_back porque creo que itera sobre algo por si mismo.
+    threads.emplace_back([&, i]() {
+        traverseRow(matrix[i], results[i], mtx);
+        });
+
+    // Join threads
+    for (auto& t : threads) {
+        t.join();
+    }
+    // Reduce: Imprimir resultados
+    for (size_t i = 0; i < results.size(); ++i) {
+        for (char simbolo : results[i]) {
+            std::cout << simbolo << " ";
+        }
+        std::cout << "\n";
+    }
+
+    //Marca el tiempo final
+    auto endTime = std::chrono::high_resolution_clock::now();
+    //Calcula e imprime la duración
+    auto duracion = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    long long tiempoDurado = duracion.count();
+    std::cout << "Tiempo durado en imprimir nivel: " << duracion.count() << " millisegundos" << std::endl;
+}
+
+void Tablero::procesarLinea(Nodo*& inicial, std::string direccion, std::list<char>& resultado, std::mutex& mtx) {
+    std::list<char> local;
+    Nodo* actual = inicial;
+
+    if (direccion != "derecha" && direccion != "abajo") {
+        std::cout << "Direccion no procesable";
+    }
+
+    while (actual) {
+        local.push_back(actual->getSimbolo());
+        if (direccion == "derecha") {
+            actual = actual->getDerecha();
+        }
+        else if (direccion == "abajo") {
+            actual = actual->getAbajo();
+        }
+    }
+
+    std::lock_guard<std::mutex> lock(mtx);
+    resultado.splice(resultado.end(), local);
+}
+
 
 void Tablero::movimiento(int& siguienteColumna, int& siguienteFila, char tecla) {
     if (tecla == 'a' || tecla == 'A') {
