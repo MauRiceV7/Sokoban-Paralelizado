@@ -395,7 +395,7 @@ void Tablero::moverJugador(bool jugarPartidaGuardada) {
     }
     partidaGuardada.cerrar();
 
-    for (int i = nivelPartidaGuardada; i <= 4; i++) {
+    for (int i = nivelPartidaGuardada; i <= 5; i++) {
         movimientosRealizados.clear();
         while (!contadorCajasEnPos.empty()) contadorCajasEnPos.pop();
         std::string nombreArchivo = "Nivel" + std::to_string(i) + ".txt";
@@ -408,9 +408,22 @@ void Tablero::moverJugador(bool jugarPartidaGuardada) {
             guardarNivel(nombreArchivo); //si no hay partida guardada
         }
 
+        bool usarParalelizado = false;
+        char resp;
+        std::cout << "Desea imprimir el tablero en modo paralelizado? (S/N): ";
+        std::cin >> resp;
+        if (resp == 'S' || resp == 's') {
+            usarParalelizado = true;
+        }
+
         do {
             system("cls");
-            imprimirTablero();
+            if (usarParalelizado) {
+                imprimirTableroParalelizado();
+            }
+            else {
+                imprimirTablero();
+            }
 
             if (contadorCajasEnPos.size() == cuentaPuntos) { //si la cantidad de puntos del nivel es igual a la cantidad de cajas en pos. final
                 std::cout << "Felicidades, ha ganado!" << "\n";
@@ -475,7 +488,7 @@ void Tablero::moverJugador(bool jugarPartidaGuardada) {
         }
         revisarPartidaGuardada = false;
 
-        if (i == 4) { // Si se agrega o se quita un nivel, el numero debe cambiarse
+        if (i == 5) { // Si se agrega o se quita un nivel, el numero debe cambiarse
             std::cout << "\nHa completado todos los niveles, felicidades!\n";
             Sleep(300);
             std::cout << "Volviendo al menu principal\n\n";
