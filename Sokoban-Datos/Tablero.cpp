@@ -108,8 +108,9 @@ void Tablero::imprimirTablero() {
 }
 void Tablero::imprimirTableroParalelizado() {
     Nodo* nodoInicial = inicio;
-    std::vector<std::list<char>> results(filas * columnas);
-    std::vector<std::thread> threads;
+	Nodo* actual = inicio;
+    std::vector<std::list<char>> resultados(filas * columnas);
+    std::list<std::thread> threads;
     std::mutex mtx;
     std::string direccionProcesar;
 
@@ -125,19 +126,23 @@ void Tablero::imprimirTableroParalelizado() {
     auto startTime = std::chrono::high_resolution_clock::now();
 
     // Map: Se lanzan los Threads
-    // TODO: falta averiguar como le pasamos el nodo que necesitamos pasarle a cada thread ya que no 
-    //       estoy seguro como funciona este metodo de threads.emplace_back porque creo que itera sobre algo por si mismo.
-    threads.emplace_back([&, i]() {
-        traverseRow(matrix[i], results[i], mtx);
-        });
+    while (actual) {
+		// Lanzar un thread para procesar la fila o columna actual
+		threads.emplace_back(procesarLinea, &actual, direccionProcesar, &resultados, &mtx);
+		// Mover actual al inicio de la siguiente fila o columna según la dirección
+		if (direccionProcesar == "abajo") 
+            actual = actual->getDerecha();
+		else if (direccionProcesar == "derecha") 
+            actual = actual->getAbajo();
+    }
 
     // Join threads
     for (auto& t : threads) {
         t.join();
     }
     // Reduce: Imprimir resultados
-    for (size_t i = 0; i < results.size(); ++i) {
-        for (char simbolo : results[i]) {
+    for (size_t i = 0; i < resultados.size(); ++i) {
+        for (char simbolo : resultados[i]) {
             std::cout << simbolo << " ";
         }
         std::cout << "\n";
