@@ -1,4 +1,4 @@
-#include "Tablero.h"
+ï»¿#include "Tablero.h"
 char nivel;
 
 Tablero::Tablero() : filas(0), columnas(0), inicio(nullptr), actual(nullptr) {
@@ -53,7 +53,7 @@ void Tablero::inicializarTablero(int filas, int columnas) {
     }
     //Marca el tiempo final
     auto endTime = std::chrono::high_resolution_clock::now();
-    //Calcula e imprime la duración
+    //Calcula e imprime la duraciÃ³n
     auto duracion = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     long long tiempoDurado = duracion.count();
     std::cout << "Tiempo durado en inicializar el tablero: " << duracion.count() << " millisegundos" << std::endl;
@@ -72,102 +72,64 @@ void Tablero::insertarSimbolo(int fila, int columna, char simbolo) {
     }
 }
 //######### Metodo con medicion de tiempo #########
-void Tablero::imprimirTablero() {
-    Nodo* filaInicio = inicio;
-    GestorArchivos guardarPartida = GestorArchivos("PartidaGuardada.txt");
-
-    guardarPartida.abrir();
-    if (guardarPartida.leer() != "")
-        guardarPartida.limpiar();
-
-    guardarPartida.escribir(nivel);
-
-    //Marca el tiempo inicial
-    auto startTime = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < filas; i++) {
-        actual = filaInicio;
-        
-        for (int j = 0; j < columnas; j++) {
-            std::cout << actual->getSimbolo() << " ";
-            guardarPartida.escribir(actual->getSimbolo());
-            actual = actual->getDerecha();
-        }
-        std::cout << std::endl;
-        guardarPartida.escribir('\n');
-        filaInicio = filaInicio->getAbajo();
-    }
-    //Marca el tiempo final
-    auto endTime = std::chrono::high_resolution_clock::now();
-    //Calcula e imprime la duración
-    auto duracion = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    long long tiempoDurado = duracion.count();
-    std::cout << "Tiempo durado en imprimir nivel: " << duracion.count() << " millisegundos" << std::endl;
-
-    guardarPartida.cerrar();
-}
 void Tablero::imprimirTableroParalelizado() {
-    Nodo* nodoInicial = inicio;
-	Nodo* actual = inicio;
-    int numLineas;
-    std::vector<std::list<char>> resultados(filas * columnas);
-    std::vector<std::thread> threads;
-    std::mutex mtx;
-    std::string direccionProcesar;
+    Nodo* actual = inicio;
+    std::string direccionProcesar = "derecha"; // fijo en filas (izqâ†’der)
+    int numLineas = filas;
 
-    direccionProcesar = "derecha";
-    numLineas = filas;
-    // Esto lo estoy usando para indicar la dirección que se va a procesar si de arriba->abajo o izquierda->derecha (LISTO!!)
-    /*
-    if (filas > columnas) {
-        direccionProcesar = "abajo";
-		numLineas = columnas;
-    }
-    else {
-        direccionProcesar = "derecha";
-		numLineas = filas;
-    }
-	*/
+    // Resultados: una lista por fila
+    std::vector<std::list<char>> resultados(numLineas);
+
+    // Mutex y threads
+    std::mutex mtx;
+    std::vector<std::thread> threads;
 
     // Marca el tiempo inicial
     auto startTime = std::chrono::high_resolution_clock::now();
 
-    // Map: Se lanzan los Threads
-    for (int i = 0; i < numLineas; ++i) {
-		// Lanzar un thread para procesar la fila o columna actual
-        threads.emplace_back(
-            &Tablero::procesarLinea,
-            this,
-            actual,
-            direccionProcesar,
-            std::ref(resultados[i]),
-            std::ref(mtx)
-        );
-		// Mover actual al inicio de la siguiente fila o columna según la dirección
-		if (direccionProcesar == "abajo") 
-            actual = actual->getDerecha();
-		else // direccionProcesar == "derecha"
-            actual = actual->getAbajo();
-    }
+    //Para dividir entre dos hilos
+    int mid = numLineas / 2;
+
+    // Thread 1: procesa de fila 0 a mid-1
+    threads.emplace_back([&, this]() {
+        Nodo* filaInicio = inicio;
+        for (int i = 0; i < mid; i++) {
+            procesarLinea(filaInicio, direccionProcesar, resultados[i], mtx);
+            filaInicio = filaInicio->getAbajo();
+        }
+    });
+
+    // Thread 2: procesa de fila mid a numLineas-1
+    threads.emplace_back([&, this]() {
+        Nodo* filaInicio = inicio;
+        for (int i = 0; i < mid; i++) {
+            filaInicio = filaInicio->getAbajo();
+        }
+        for (int i = mid; i < numLineas; i++) {
+            procesarLinea(filaInicio, direccionProcesar, resultados[i], mtx);
+            filaInicio = filaInicio->getAbajo();
+        }
+    });
 
     // Join threads
     for (auto& t : threads) {
         t.join();
     }
-    // Reduce: Imprimir resultados
-    for (size_t i = 0; i < resultados.size(); ++i) {
+
+    // Reduce para imprimir los resultados
+    for (int i = 0; i < numLineas; i++) {
         for (char simbolo : resultados[i]) {
             std::cout << simbolo << " ";
         }
         std::cout << "\n";
     }
 
-    //Marca el tiempo final
+    // Marca el tiempo final en microsegundos
     auto endTime = std::chrono::high_resolution_clock::now();
-    //Calcula e imprime la duración
-    auto duracion = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    long long tiempoDurado = duracion.count();
-    std::cout << "Tiempo durado en imprimir nivel: " << duracion.count() << " millisegundos" << std::endl;
+    auto duracion = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+
+    std::cout << "Tiempo durado en imprimir nivel (paralelizado, 2 hilos): "
+              << duracion.count() << " microsegundos\n";
 }
 
 void Tablero::procesarLinea(Nodo* inicial, std::string direccion, std::list<char>& resultado, std::mutex& mtx) {
@@ -422,22 +384,9 @@ void Tablero::moverJugador(bool jugarPartidaGuardada) {
             guardarNivel(nombreArchivo); //si no hay partida guardada
         }
 
-        bool usarParalelizado = false;
-        char resp;
-        std::cout << "Desea imprimir el tablero en modo paralelizado? (S/N): ";
-        std::cin >> resp;
-        if (resp == 'S' || resp == 's') {
-            usarParalelizado = true;
-        }
-
         do {
             system("cls");
-            if (usarParalelizado) {
-                imprimirTableroParalelizado();
-            }
-            else {
-                imprimirTablero();
-            }
+            imprimirTableroParalelizado();
 
             if (contadorCajasEnPos.size() == cuentaPuntos) { //si la cantidad de puntos del nivel es igual a la cantidad de cajas en pos. final
                 std::cout << "Felicidades, ha ganado!" << "\n";
@@ -480,7 +429,7 @@ void Tablero::moverJugador(bool jugarPartidaGuardada) {
                 guardarNivel(nombreArchivo);
 
                 system("cls");
-                imprimirTablero();
+                imprimirTableroParalelizado();
 
                 for (char movimiento : movimientosRealizados) {
                     jugar(static_cast<char>(toupper(movimiento)));
@@ -488,7 +437,7 @@ void Tablero::moverJugador(bool jugarPartidaGuardada) {
                     Sleep(200);
 
                     system("cls");
-                    imprimirTablero();
+                    imprimirTableroParalelizado();
                 }
 
                 std::cout << "Movimientos Realizados:\n";

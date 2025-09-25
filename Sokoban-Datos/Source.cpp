@@ -23,7 +23,7 @@ int main() {
 
         case 3: {
             std::cout << "Gracias por jugar\n\n" << "Estudiantes \n";
-            std::cout << "[1] Valery Zuniga Perez (6pm) \n" << "[2] Wendy Carballo Chavarria (6pm) \n" << "[3] Ignacio Ledezma Hidalgo (8pm) \n\n"; break;
+            std::cout << "[1] Mauricio Vargas Vicarioli \n" << "[2] Ignacio Ledezma Hidalgo \n\n"; break;
         }
 
         default: std::cerr << "Esa opcion no existe\n"; break;
