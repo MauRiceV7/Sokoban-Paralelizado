@@ -6,58 +6,95 @@ Tablero::Tablero() : filas(0), columnas(0), inicio(nullptr), actual(nullptr) {
     columnaJugador = 0;
     filaJugador = 0;
     nivelJuego = GestorArchivos();
+    mostrarTiemposConPausa = true;
 }
 
+//Este metodo paralelizado se encarga de inicializar el tablero con el tamano necesario
+//(asigna espacios de memoria) pero sin insertar ningun simbolo
 void Tablero::inicializarTablero(int filas, int columnas) {
+    if (filas <= 0 || columnas <= 0) {
+        std::cout << "Error: Dimensiones invalidas (" << filas << "x" << columnas << ")." << std::endl;
+        inicio = nullptr;
+        actual = nullptr;
+        this->filas = 0;
+        this->columnas = 0;
+        return;
+    }
+
     this->filas = filas;
     this->columnas = columnas;
-    Nodo* fila = nullptr; // Almacena inicio de fila
-    Nodo* filaSuperior = nullptr; // Almacena fila superior
-    Nodo* actualSuperior = nullptr; // Camina fila superior
+    std::vector<Nodo*> iniciosFilas(filas);
 
-    //Marca el tiempo inicial
     auto startTime = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < filas; i++) {
-        for (int j = 0; j < columnas; j++) {
-            if (i == 0 && j == 0) { // Si estoy en el inicio
-                inicio = new Nodo(' ');
-                actual = inicio;
-                fila = inicio;
-                filaSuperior = inicio;
-            }
-            else { // Si ya me movi de posicion, por ejemplo - X - - - -
-                Nodo* nuevoS = new Nodo(' ');
-                actual->setDerecha(nuevoS); // Actual apunta a inicio en la primera iteracion
-                nuevoS->setIzquierda(actual); // El getIzquierda de nuevo es actual, que apunta a inicio
-                actual = nuevoS;
 
-                // Conexion de los nodos vecinos (arriba, abajo, izquierda y derecha)
-                if (i > 0 && j == 0) {
-                    Nodo* nuevo = new Nodo(' ');
-                    fila->setAbajo(nuevo);
-                    nuevo->setArriba(fila);
-                    filaSuperior = fila;
-                    fila = nuevo;
-                    actual = fila;
-                }
-
-                if (i > 0 && j > 0) {
-                    actualSuperior = filaSuperior->getDerecha();
-                    actual->setArriba(actualSuperior);
-                    actualSuperior->setAbajo(actual);
-                    actualSuperior = actualSuperior->getDerecha();
-                }
-                // Ahora, actual vale lo que vale nuevo, que es el siguiente de inicio
-            }
-        }
+    //Crea los nodos iniciales en cada una de las filas
+    iniciosFilas[0] = new Nodo(' ');
+    inicio = iniciosFilas[0];
+    actual = inicio;
+    for (int i = 1; i < filas; ++i) {
+        iniciosFilas[i] = new Nodo(' ');
+        iniciosFilas[i - 1]->setAbajo(iniciosFilas[i]);
+        iniciosFilas[i]->setArriba(iniciosFilas[i - 1]);
     }
-    //Marca el tiempo final
-    auto endTime = std::chrono::high_resolution_clock::now();
-    //Calcula e imprime la duración
-    auto duracion = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    long long tiempoDurado = duracion.count();
-    std::cout << "Tiempo durado en inicializar el tablero: " << duracion.count() << " millisegundos" << std::endl;
 
+    //Los nodos horizontales de cada fila se crean en paralelo
+    int numHilos = std::thread::hardware_concurrency();
+    if (numHilos == 0) numHilos = 4; //Para evitar que sea secuencial, se setea por defecto 4 hilos (asumiendo que sea mayor a 50x##)
+    if (filas < 50) numHilos = 1; //Por defecto si la tabla es muy pequena mejor crearlo con 1 solo hilo para evitar el "overhead"
+    int filasPorHilo = (numHilos == 1) ? filas : filas / numHilos; //cada nodo por cada fila se maneja en forma paralela
+    std::vector<std::thread> threads;
+
+    for (int t = 0; t < numHilos; ++t) {
+        threads.emplace_back([&, t]() {
+            int inicioFila = t * filasPorHilo;
+            int finFila = (t == numHilos - 1) ? filas : inicioFila + filasPorHilo;
+            for (int i = inicioFila; i < finFila; ++i) {
+                Nodo* actual = iniciosFilas[i];
+                for (int j = 1; j < columnas; ++j) {
+                    Nodo* nuevo = new Nodo(' ');
+                    actual->setDerecha(nuevo);
+                    nuevo->setIzquierda(actual);
+                    actual = nuevo;
+                }
+            }
+            });
+    }
+    for (auto& th : threads) th.join();
+    threads.clear();
+
+    //Enlaza cada nodo con sus semejantes (arriba, abajo, derecha) --> se empieza a leer desde la izquierda de cada fila
+    for (int t = 0; t < numHilos; ++t) {
+        threads.emplace_back([&, t]() {
+            int inicioFila = t * filasPorHilo;
+            int finFila = (t == numHilos - 1) ? filas : inicioFila + filasPorHilo;
+            for (int i = inicioFila; i < finFila; ++i) {
+                if (i == 0) continue;
+                Nodo* actualInferior = iniciosFilas[i]->getDerecha();
+                Nodo* actualSuperior = iniciosFilas[i - 1]->getDerecha();
+                for (int j = 1; j < columnas; ++j) {
+                    if (actualInferior && actualSuperior) {
+                        actualInferior->setArriba(actualSuperior);
+                        actualSuperior->setAbajo(actualInferior);
+                        actualInferior = actualInferior->getDerecha();
+                        actualSuperior = actualSuperior->getDerecha();
+                    }
+                }
+            }
+            });
+    }
+    for (auto& th : threads) th.join(); //une todos los hilos
+
+    //Mostrar tiempo y tablero inicial
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duracion = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    std::cout << "Tiempo en crear estructura del tablero (paralelizado, " << numHilos << " hilos): "
+        << duracion.count() << " microsegundos" << std::endl;
+
+    //Para que se puedan observar los tiempos antes de que se imprima el tablero en pantalla
+    if (mostrarTiemposConPausa) {
+        std::cout << "Presione cualquier tecla para continuar..." << std::endl;
+        _getch(); //espera a que el usuario presione alguna tecla para avanzar
+    }
 }
 
 void Tablero::insertarSimbolo(int fila, int columna, char simbolo) {
@@ -116,7 +153,7 @@ void Tablero::imprimirTableroParalelizado() {
         t.join();
     }
 
-    // Reduce para imprimir los resultados
+    //Se hace el reduce para imprimir los resultados
     for (int i = 0; i < numLineas; i++) {
         for (char simbolo : resultados[i]) {
             std::cout << simbolo << " ";

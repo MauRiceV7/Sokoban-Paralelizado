@@ -43,10 +43,10 @@ std::string GestorArchivos::leer() {
         }
         //Marca el tiempo final
         auto endTime = std::chrono::high_resolution_clock::now();
-        //Calcula e imprime la duración
+        //Calcula e imprime la duracion
         auto duracion = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
         long long tiempoDurado = duracion.count();
-        std::cout << "Tiempo durado en leer archivo: " << duracion.count() << " microseconds" << std::endl;
+        std::cout << "Tiempo durado en leer archivo: " << duracion.count() << " microsegundos" << std::endl;
     }
     return contenido;
 }

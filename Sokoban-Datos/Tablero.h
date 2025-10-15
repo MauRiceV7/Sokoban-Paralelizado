@@ -3,14 +3,13 @@
 #include "GestorArchivos.h"
 #include <list>
 #include <mutex>
-
+#include <conio.h>
 
 
 class Tablero {
 public:
     Tablero();
     void inicializarTablero(int, int);
-    void imprimirTablero();
     void imprimirTableroParalelizado();
     void procesarLinea(Nodo*, std::string, std::list<char>&, std::mutex&);
     void insertarSimbolo(int, int, char);
@@ -26,6 +25,7 @@ public:
     int filaJugador;
     int columnaJugador;
     int cuentaPuntos;
+    bool mostrarTiemposConPausa;
     std::stack<int> contadorCajasEnPos;
     std::vector<char> movimientosRealizados;
     Nodo* inicio; // siempre apunta al inicio del "grid"
