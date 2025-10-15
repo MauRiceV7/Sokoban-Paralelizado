@@ -108,87 +108,55 @@ void Tablero::insertarSimbolo(int fila, int columna, char simbolo) {
         std::cout << "La fila o columna especificada esta fuera de los limites del tablero." << std::endl;
     }
 }
-//######### Metodo con medicion de tiempo #########
-void Tablero::imprimirTableroParalelizado() {
+void Tablero::imprimirTableroParalelizado(int numThreads = 2) {
+    Nodo* nodoInicial = inicio;
     Nodo* actual = inicio;
-    std::string direccionProcesar = "derecha"; // fijo en filas (izq→der)
-    int numLineas = filas;
+    std::string direccionProcesar = "derecha";
+    std::vector<std::list<char>> resultados(filas);
 
-    // Resultados: una lista por fila
-    std::vector<std::list<char>> resultados(numLineas);
-
-    // Mutex y threads
-    std::mutex mtx;
-    std::vector<std::thread> threads;
-
+    std::cout << "Numero de Threads recomendados para imprimir tablero: " << std::thread::hardware_concurrency() << std::endl;
+    
     // Marca el tiempo inicial
     auto startTime = std::chrono::high_resolution_clock::now();
 
-    //Para dividir entre dos hilos
-    int mid = numLineas / 2;
-
-    // Thread 1: procesa de fila 0 a mid-1
-    threads.emplace_back([&, this]() {
-        Nodo* filaInicio = inicio;
-        for (int i = 0; i < mid; i++) {
-            procesarLinea(filaInicio, direccionProcesar, resultados[i], mtx);
-            filaInicio = filaInicio->getAbajo();
+    #pragma omp parallel for num_threads(numThreads)
+        for (int i = 0; i < filas; ++i) {
+            Nodo* actual = encontrarNodo(i, 0);
+            procesarLinea(actual, direccionProcesar, resultados[i]);
         }
-    });
 
-    // Thread 2: procesa de fila mid a numLineas-1
-    threads.emplace_back([&, this]() {
-        Nodo* filaInicio = inicio;
-        for (int i = 0; i < mid; i++) {
-            filaInicio = filaInicio->getAbajo();
-        }
-        for (int i = mid; i < numLineas; i++) {
-            procesarLinea(filaInicio, direccionProcesar, resultados[i], mtx);
-            filaInicio = filaInicio->getAbajo();
-        }
-    });
-
-    // Join threads
-    for (auto& t : threads) {
-        t.join();
-    }
-
-    //Se hace el reduce para imprimir los resultados
-    for (int i = 0; i < numLineas; i++) {
+    for (int i = 0; i < filas; ++i) {
         for (char simbolo : resultados[i]) {
             std::cout << simbolo << " ";
         }
         std::cout << "\n";
     }
 
-    // Marca el tiempo final en microsegundos
+    //Marca el tiempo final
     auto endTime = std::chrono::high_resolution_clock::now();
-    auto duracion = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
-
-    std::cout << "Tiempo durado en imprimir nivel (paralelizado, 2 hilos): "
-              << duracion.count() << " microsegundos\n";
+    //Calcula e imprime la duración
+    auto duracion = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    long long tiempoDurado = duracion.count();
+    std::cout << "Tiempo durado en imprimir nivel: " << duracion.count() << " millisegundos" << std::endl;
 }
 
-void Tablero::procesarLinea(Nodo* inicial, std::string direccion, std::list<char>& resultado, std::mutex& mtx) {
+void Tablero::procesarLinea(Nodo* inicial, std::string direccion, std::list<char>& resultado) {
     std::list<char> local;
     Nodo* actual = inicial;
 
     if (direccion != "derecha" && direccion != "abajo") {
         std::cout << "Direccion no procesable";
     }
-
     while (actual) {
-        local.push_back(actual->getSimbolo());
+        resultado.push_back(actual->getSimbolo());
         if (direccion == "derecha") {
             actual = actual->getDerecha();
         }
         else if (direccion == "abajo") {
             actual = actual->getAbajo();
         }
+        else break;
     }
-
-    std::lock_guard<std::mutex> lock(mtx);
-    resultado.splice(resultado.end(), local);
 }
 
 
