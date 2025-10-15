@@ -3,7 +3,9 @@
 
 #include <string>
 #include <fstream>
+#include <vector>
 #include <chrono>
+#include <conio.h>
 
 class GestorArchivos {
 public:
@@ -21,6 +23,7 @@ public:
 private:
     std::string nombreArchivo;
     std::fstream archivo;
+    bool mostrarTiemposConPausa;
 };
 
 #endif // GESTORARCHIVOS_H

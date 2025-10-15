@@ -135,9 +135,10 @@ void Tablero::imprimirTableroParalelizado(int numThreads = 2) {
     //Marca el tiempo final
     auto endTime = std::chrono::high_resolution_clock::now();
     //Calcula e imprime la duración
-    auto duracion = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    auto duracion = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
     long long tiempoDurado = duracion.count();
-    std::cout << "Tiempo durado en imprimir nivel: " << duracion.count() << " millisegundos" << std::endl;
+    std::cout << "Tiempo durado en imprimir nivel: " << (duracion.count() / 1000) << " millisegundos (" 
+        << duracion.count() << " microsegundos)" << std::endl;
 }
 
 void Tablero::procesarLinea(Nodo* inicial, std::string direccion, std::list<char>& resultado) {
