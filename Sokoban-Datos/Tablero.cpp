@@ -98,7 +98,7 @@ void Tablero::inicializarTablero(int filas, int columnas) {
 }
 
 void Tablero::insertarSimbolo(int fila, int columna, char simbolo) {
-    // Fila y columna dentro de los limites del tablero
+    //Fila y columna dentro de los limites del tablero
     if (fila >= 0 && fila < filas && columna >= 0 && columna < columnas) {
         Nodo* nodo = encontrarNodo(fila, columna);
         nodo->setSimbolo(simbolo);

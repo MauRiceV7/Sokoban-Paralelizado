@@ -2,7 +2,6 @@
 #include "Nodo.h"
 #include "GestorArchivos.h"
 #include <list>
-#include <mutex>
 #include <conio.h>
 #include <omp.h>
 
