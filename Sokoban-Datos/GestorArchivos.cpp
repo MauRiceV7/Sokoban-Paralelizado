@@ -103,7 +103,7 @@ std::string GestorArchivos::leer() {
         << duracion.count() << " microsegundos (" << (duracion.count() / 1000.0) << " ms)" << std::endl;
     if (mostrarTiemposConPausa) {
         std::cout << "Presione cualquier tecla para continuar..." << std::endl;
-        _getch();
+        getch();
     }
 
     return contenido;

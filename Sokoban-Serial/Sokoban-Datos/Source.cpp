@@ -8,17 +8,17 @@ int main() {
         std::cout << "[2] Cargar una partida guardada \n";
         std::cout << "[3] Salir del programa          \n";
         std::cout << "Su respuesta: "; std::cin >> opc;
-        system("cls");
+        Utilities::clearScreen();
 
         switch (opc) {
         case 1: {
             TableroL->moverJugador(false);
-            system("cls");
+            Utilities::clearScreen();
         } break;
 
         case 2: {
 			TableroL->moverJugador(true);
-            system("cls");
+            Utilities::clearScreen();
         } break;
 
         case 3: {
@@ -31,6 +31,6 @@ int main() {
 
     } while (opc == 1 || opc == 2);
 
-    system("pause");
+    Utilities::pause();
     return 0;
 }

@@ -1,8 +1,8 @@
 #pragma once
-#include "Windows.h"
+
+#include <unistd.h>
 #include <stack>
 #include <vector>
-#include <conio.h>
 #include <iostream>
 #include <sstream>
 #include <thread> //para el this_thread

@@ -5,7 +5,7 @@
 #include <fstream>
 #include <vector>
 #include <chrono>
-#include <conio.h>
+#include "Utilities.h"
 
 class GestorArchivos {
 public:

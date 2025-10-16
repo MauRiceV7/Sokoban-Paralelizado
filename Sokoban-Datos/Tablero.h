@@ -3,8 +3,8 @@
 #include "GestorArchivos.h"
 #include <list>
 #include <mutex>
-#include <conio.h>
 #include <omp.h>
+#include "Utilities.h"
 
 
 class Tablero {

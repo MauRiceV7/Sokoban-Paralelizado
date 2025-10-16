@@ -93,7 +93,7 @@ void Tablero::inicializarTablero(int filas, int columnas) {
     //Para que se puedan observar los tiempos antes de que se imprima el tablero en pantalla
     if (mostrarTiemposConPausa) {
         std::cout << "Presione cualquier tecla para continuar..." << std::endl;
-        _getch(); //espera a que el usuario presione alguna tecla para avanzar
+        getch(); //espera a que el usuario presione alguna tecla para avanzar
     }
 }
 
@@ -391,7 +391,7 @@ void Tablero::moverJugador(bool jugarPartidaGuardada) {
         }
 
         do {
-            system("cls");
+            Utilities::clearScreen();
             imprimirTableroParalelizado();
 
             if (contadorCajasEnPos.size() == cuentaPuntos) { //si la cantidad de puntos del nivel es igual a la cantidad de cajas en pos. final
@@ -405,7 +405,7 @@ void Tablero::moverJugador(bool jugarPartidaGuardada) {
             std::cout << "Presione Z para reiniciar el nivel." << std::endl;
             std::cout << "Presione cualquier letra distinta de W, A, S, D para salir del nivel." << std::endl;
 
-            tecla = _getch();
+            tecla = getch();
 
             if (tecla == 'Z' || tecla == 'z') {
                 guardarNivel(nombreArchivo);
@@ -413,7 +413,7 @@ void Tablero::moverJugador(bool jugarPartidaGuardada) {
             }
 
             if (tecla != 'W' && tecla != 'A' && tecla != 'S' && tecla != 'D' && tecla != 'Z' && tecla != 'w' && tecla != 'a' && tecla != 's' && tecla != 'd' && tecla != 'z') {
-                std::cout << "\nSaliendo del nivel...\n"; Sleep(500);
+                std::cout << "\nSaliendo del nivel...\n"; Utilities::sleepMs(500);
                 return;
             }
 
@@ -434,15 +434,15 @@ void Tablero::moverJugador(bool jugarPartidaGuardada) {
             if (respuesta == 'S' || respuesta == 's') {
                 guardarNivel(nombreArchivo);
 
-                system("cls");
+                Utilities::clearScreen();
                 imprimirTableroParalelizado();
 
                 for (char movimiento : movimientosRealizados) {
                     jugar(static_cast<char>(toupper(movimiento)));
 
-                    Sleep(200);
+                    Utilities::sleepMs(200);
 
-                    system("cls");
+                    Utilities::clearScreen();
                     imprimirTableroParalelizado();
                 }
 
@@ -452,16 +452,16 @@ void Tablero::moverJugador(bool jugarPartidaGuardada) {
                 }
                 std::cout << "\n\n";
 
-                system("pause");
+                Utilities::pause();
             }
         }
         revisarPartidaGuardada = false;
 
         if (i == 5) { // Si se agrega o se quita un nivel, el numero debe cambiarse
             std::cout << "\nHa completado todos los niveles, felicidades!\n";
-            Sleep(300);
+            Utilities::sleepMs(300);
             std::cout << "Volviendo al menu principal\n\n";
-            system("pause");
+            Utilities::pause();
         }
     }
 }
